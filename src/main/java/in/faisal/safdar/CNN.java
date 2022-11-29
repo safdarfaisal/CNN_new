@@ -113,13 +113,17 @@ public class CNN {
         int inputW = input.numCols();
         int outCols = inputW - filterW + 1;
         int outRows = inputH - filterH + 1;
+        for(int fn = 0; fn < fLen; fn++) {
+            SimpleMatrix f = new SimpleMatrix(filterH, filterW);
+            f.zero();
+            fts[fn] = f;
+        }
         for (int i = 0; i < outRows; i++) {
             for (int j = 0; j < outCols; j++) {
                 for(int fn = 0; fn < fLen; fn++) {
                     SimpleMatrix x = input.extractMatrix(i, i + filterH, j, j + filterW);
-                    SimpleMatrix f = new SimpleMatrix(filterH, filterW);
                     SimpleMatrix outputGradient = outputGradients[fn];
-                    fts[fn] = f.plus(x.scale(outputGradient.get(i,j)));
+                    fts[fn] = fts[fn].plus(x.scale(outputGradient.get(i,j)));
                 }
             }
         }
@@ -197,7 +201,7 @@ public class CNN {
 
         SimpleMatrix inputLosses = new SimpleMatrix(outputLayerInputNodeCount,1);
         inputLosses.zero();
-        float outputSoftMaxSum = (float)((new SimpleMatrixEx(outputSoftMaxExp)).exp().elementSum());
+        float outputSoftMaxSum = (float)(outputSoftMaxExp.elementSum());
         for(int i=0; i < outGradient.numCols(); i++) {
             float gradient = (float)(outGradient.get(0, i));
             if (gradient != 0) {
@@ -304,7 +308,7 @@ public class CNN {
                 System.exit(-1);
             }
         }
-        System.out.println("Average accuracy: " + ((float)accTotal)/MNIST_CNN_TRAIN_STEPS_MAX + "%");
+        System.out.println("Average accuracy: " + (accTotal*100.0f)/MNIST_CNN_TRAIN_STEPS_MAX + "%");
     }
 
     //returns digit values from 0 to 9, or negative numbers for error
