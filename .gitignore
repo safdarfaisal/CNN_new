@@ -1,3 +1,7 @@
 build/
 data/
 .idea/
+.gradle/
+gradle/
+gradlew
+gradlew.bat
