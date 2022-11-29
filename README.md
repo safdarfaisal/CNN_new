@@ -11,7 +11,7 @@ Softmax activation
 
 ### Results
 
-70%+ average accuracy observed on training and test datasets with 10,000 iterations, 3x3 Conv Layer with 12 filters and 2x2 maxpooling, on dataset downloaded from https://www.kaggle.com/datasets/jidhumohan/mnist-png.
+~85% average accuracy observed on training and test datasets with 30,000 iterations, 3x3 Conv Layer with 12 filters and 2x2 maxpooling, on dataset downloaded from https://www.kaggle.com/datasets/jidhumohan/mnist-png.
 
 ### Credits
 
