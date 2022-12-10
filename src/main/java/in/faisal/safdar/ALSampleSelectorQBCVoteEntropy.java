@@ -8,21 +8,7 @@ public class ALSampleSelectorQBCVoteEntropy implements ALSampleSelectionStrategy
         if (auxModels == null) {
             return null;
         }
-        //Map<SampleId, SamplePredictor> m = new HashMap();
-        EvalResultMap m = new EvalResultMap();
-        List<EvalResultMap> results = new ArrayList<>();
-        model.setDataset(samples);
-        m = model.eval(samples.testSampleCount(), m, false);
-        results.add(m);
-
-        auxModels.forEach(
-                auxModel -> {
-                    EvalResultMap em = new EvalResultMap();
-                    auxModel.setDataset(samples.refurbishedClone());
-                    em = auxModel.eval(samples.testSampleCount(), em, false);
-                    results.add(em);
-                }
-        );
+        List<EvalResultMap> results = ALQBCModelPreparer.evaluateModel(model, auxModels, samples);
         int committeeSize = auxModels.size() + 1;
         Map<String, List<Integer>> votes = new HashMap<String, List<Integer>>();
         //add a vote list for all samples. All results have the same samples, so just one is enough.

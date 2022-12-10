@@ -11,15 +11,17 @@ public class ALMetricsStrategy {
     Map<String, Object> globalMetrics;
     //List of metric maps per strategy, ordered by stage id
     List<Map<String, Object>> stageMetrics;
+    Boolean debug = false;
 
-    ALMetricsStrategy(String name) {
+    ALMetricsStrategy(String name, Boolean debug) {
         globalMetrics = new HashMap<>();
         stageMetrics = new ArrayList<>();
         this.name = name;
+        this.debug = debug;
     }
 
     ALMetricsStrategy cloneRefurbished(String newName) {
-        ALMetricsStrategy clone = new ALMetricsStrategy(newName);
+        ALMetricsStrategy clone = new ALMetricsStrategy(newName, debug);
         globalMetrics.entrySet().forEach(
                 entry -> {
                     clone.globalMetrics.put(entry.getKey(), entry.getValue());

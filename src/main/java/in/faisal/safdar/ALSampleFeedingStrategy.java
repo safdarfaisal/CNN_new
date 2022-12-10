@@ -130,10 +130,6 @@ public class ALSampleFeedingStrategy {
         return clone;
     }
 
-    public void eval() {
-
-    }
-
     public void runStage(int stageId) {
         //sample selection for labeling and training
         List<ALSampleFeederDataset> datasets = createALStagePoolDataSources(stageId);
@@ -151,6 +147,13 @@ public class ALSampleFeedingStrategy {
         res = model.eval(testSet.size(), res, false);
         Map<String, Object> metricsMap = res.metricsMap;
         metrics.stageMetrics.add(metricsMap);
+
+        if (metrics.debug && (metrics.name.equals("QBCKLDivergence") || metrics.name.equals("QBCVoteEntropy") ||
+                metrics.name.equals("UncertaintySmallestMargin"))) {
+            //System.out.println(metrics.name + " " + String.valueOf(stageId));
+            //l.forEach(s -> System.out.println(s.value()));
+            ImageDisplay.show(l, ds, metrics.name + " " + String.valueOf(stageId));
+        }
 
         if (auxModels != null) {
             auxModels.forEach(
@@ -178,7 +181,7 @@ public class ALSampleFeedingStrategy {
         //TODO: Maybe move this to an experiment class later so that multiple experiments can be supported.
         List<ALMetricsStrategy> ml = new ArrayList(2);
         int stageCount = 9;
-        ALMetricsStrategy alms = new ALMetricsStrategy("UncertaintyLeastConfidence");
+        ALMetricsStrategy alms = new ALMetricsStrategy("UncertaintyLeastConfidence", true);
         ALSampleFeedingStrategy s = ALSampleFeedingStrategy.create(new MNISTIDXDataset(),
                 1000, stageCount, 1000, 10, new ALSampleSelectorLeastConfidence(),
                 alms);
@@ -207,9 +210,13 @@ public class ALSampleFeedingStrategy {
         ml.add(alms);
         ALSampleFeedingStrategy s4 =
                 s.cloneRefurbished(new MNISTIDXDataset(), new ALSampleSelectorQBCVoteEntropy(), alms);
-        alms = alms.cloneRefurbished("RandomFromPool");
+        alms = alms.cloneRefurbished("QBCKLDivergence");
         ml.add(alms);
         ALSampleFeedingStrategy s5 =
+                s.cloneRefurbished(new MNISTIDXDataset(), new ALSampleSelectorQBCKLDivergence(), alms);
+        alms = alms.cloneRefurbished("RandomFromPool");
+        ml.add(alms);
+        ALSampleFeedingStrategy s6 =
                 s.cloneRefurbished(new MNISTIDXDataset(), new ALSampleSelectorRandom(), alms);
         for (int i = 0; i < stageCount; i++) {
             //TODO: these stages can be run in parallel in threads (ensure concurrency)
@@ -219,6 +226,7 @@ public class ALSampleFeedingStrategy {
             s3.runStage(i);
             s4.runStage(i);
             s5.runStage(i);
+            s6.runStage(i);
         }
         ml.forEach(
                 metric -> {

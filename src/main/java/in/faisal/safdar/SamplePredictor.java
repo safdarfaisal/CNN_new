@@ -1,5 +1,7 @@
 package in.faisal.safdar;
 
+import java.util.List;
+
 public class SamplePredictor {
     public SampleId index;
     public int predictedLabel; //same as the digit
@@ -9,4 +11,5 @@ public class SamplePredictor {
     public float topTwoProbDiff; //highest prob - next prob
     public float largestProbDiff; //highest prob - lowest prob
     public float entropy; //SumOf(-prob*log(prob)
+    public List<Double> classProbs; //full class probability list
 }

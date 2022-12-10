@@ -5,6 +5,7 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.*;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.ejml.simple.SimpleMatrix;
 
 /*
@@ -78,7 +79,7 @@ public class MnistDigitSFCNN implements MNISTModel {
         /*
         try {
             //show(cnn.getDataSet().trainingSample().image);
-            cnn.show(cnn.getDataSet().trainingSample().bufferedImage());
+            show(cnn.getDataSet().trainingSample().bufferedImage());
         } catch(IOException e) {
             e.printStackTrace();
         }
@@ -87,20 +88,6 @@ public class MnistDigitSFCNN implements MNISTModel {
 
     public MNISTDataset getDataSet() {
         return dataSet;
-    }
-
-    @SuppressWarnings("deprecation")
-    public void show(BufferedImage image) {
-        // create the GUI for viewing the image if needed
-        JFrame frame = new JFrame();
-        //set image
-        frame.setContentPane(new JLabel(new ImageIcon(image)));
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setResizable(false);
-        frame.pack();
-        // draw
-        frame.setVisible(true);
-        frame.repaint();
     }
 
     private SimpleMatrix[] convolve(SimpleMatrix input, SimpleMatrix[] filters) {
@@ -199,7 +186,7 @@ public class MnistDigitSFCNN implements MNISTModel {
                     SimpleMatrix x = input.extractMatrix(p, p+MAXPOOL_FILTER_ROWS,
                             q, q+MAXPOOL_FILTER_COLUMNS);
                     Pair<Integer, Integer> indices = new SimpleMatrixEx(x).indexOfMax();
-                    inputGradient.set(p+indices.row, q+indices.column, outputGradient.get(j, k));
+                    inputGradient.set(p+indices.getLeft(), q+indices.getRight(), outputGradient.get(j, k));
                 }
             }
         }
@@ -307,7 +294,7 @@ public class MnistDigitSFCNN implements MNISTModel {
                 outputResults = outputForward(maxPoolOutput);
                 //loss computation
                 loss += -Math.log(outputResults.get(0, sampleLabel));
-                int result = new SimpleMatrixEx(outputResults).indexOfMax().column;
+                int result = new SimpleMatrixEx(outputResults).indexOfMax().getRight();
                 accuracy += ((sampleLabel == result) ? 1 : 0);
                 //backward propagation
                 SimpleMatrix lossGradient = new SimpleMatrix(1, 10);
@@ -351,7 +338,7 @@ public class MnistDigitSFCNN implements MNISTModel {
             SimpleMatrix[] maxPoolOutput = maxPool(convOutput);
             outputResults = outputForward(maxPoolOutput);
             SimpleMatrixEx outputEx = new SimpleMatrixEx(outputResults);
-            pr.predictedLabel = outputEx.indexOfMax().column;
+            pr.predictedLabel = outputEx.indexOfMax().getRight();
             pr.probForCorrectLabel = (float)(outputResults.get(0, pr.correctLabel));
             pr.probForPrediction = (float)(outputEx.elementMax());
             List <Double> l = outputEx.elementList();
@@ -365,6 +352,7 @@ public class MnistDigitSFCNN implements MNISTModel {
                 entropy = entropy - p*Math.log10(p);
             }
             pr.entropy = (float)entropy;
+            pr.classProbs = outputEx.elementList();
         } catch (IOException e) {
             e.printStackTrace();
             System.exit(-1);

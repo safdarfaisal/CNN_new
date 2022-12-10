@@ -1,5 +1,6 @@
 package in.faisal.safdar;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.ejml.simple.SimpleMatrix;
 import java.util.ArrayList;
 import java.util.List;
@@ -51,14 +52,13 @@ public class SimpleMatrixEx {
     //return index of max element
     public Pair<Integer, Integer> indexOfMax() {
         double max = matrix.get(0, 0);
-        Pair<Integer, Integer> p = new Pair<>(0, 0);
+        Pair<Integer, Integer> p = Pair.of(0, 0);
         for (int i = 0; i < matrix.numRows(); i++) {
             for (int j = 0; j < matrix.numCols(); j++) {
                 double d = matrix.get(i, j);
                 if (max < d) {
                     max = d;
-                    p.row = i;
-                    p.column = j;
+                    p = Pair.of(i, j);
                 }
             }
         }

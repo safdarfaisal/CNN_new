@@ -7,7 +7,6 @@ set encoding utf8
 set datafile separator ' '
 set grid
 
-# Set linestyle 1 to blue (#0060ad)
 set style line 1 \
     linecolor rgb '#0060ad' \
     linetype 1 linewidth 2 \
@@ -32,9 +31,13 @@ set style line 6 \
     linecolor rgb '#ad0060' \
     linetype 1 linewidth 2 \
     pointtype 7 pointsize 0.5
+set style line 7 \
+    linecolor rgb '#333333' \
+    linetype 1 linewidth 2 \
+    pointtype 7 pointsize 0.5
 
 set title "Learning Curves for Active Learning"
-set yrange [30:100]
+set yrange [10:100]
 set ylabel "Accuracy"
 set xlabel "Active Learning Stages"
 
@@ -48,6 +51,8 @@ plot "UncertaintyLeastConfidence.txt" title "Uncertainty, Least Confidence" \
         with linespoints linestyle 4, \
     "QBCVoteEntropy.txt" title "QBC, Max Vote Entropy" \
         with linespoints linestyle 5, \
+    "QBCKLDivergence.txt" title "QBC, Max KL Divergence" \
+        with linespoints linestyle 6, \
     "RandomFromPool.txt" title "Random from Pools" \
-        with linespoints linestyle 6
+        with linespoints linestyle 7
 ```
