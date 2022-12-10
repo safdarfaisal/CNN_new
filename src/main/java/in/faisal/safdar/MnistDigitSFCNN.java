@@ -3,7 +3,7 @@ package in.faisal.safdar;
 import javax.swing.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.util.Random;
+import java.util.*;
 
 import org.ejml.simple.SimpleMatrix;
 
@@ -15,7 +15,7 @@ CNN to classify MNIST DB. Written from scratch in Java.
 2x2 Maxpool Layer
 Softmax activation
  */
-public class CNN {
+public class MnistDigitSFCNN implements MNISTModel {
     public static final int MNIST_CNN_TRAIN_STEPS_MAX = 10000;
     public static final int CONV_FILTER_COUNT = 12;
     public static final int CONV_FILTER_ROWS = 3;
@@ -27,46 +27,70 @@ public class CNN {
     public static final int MAXPOOL_FILTER_ROWS = 2;
     public static final int MAXPOOL_FILTER_COLUMNS = 2;
     public static final float LEARNING_RATE = 0.003f;
-
-    //Convolution filters, 8 3x3 matrices
-    private static SimpleMatrix[] convFilters = new SimpleMatrix[CONV_FILTER_COUNT];
-
-    //Output layer parameters
     private static int outputLayerInputNodeCount =
             fanOut*CONV_FILTER_COUNT/(MAXPOOL_FILTER_ROWS*MAXPOOL_FILTER_COLUMNS);
-    private static SimpleMatrix outputLayerFlatInput;
-    private static SimpleMatrix outputLayerWeights;
-    private static SimpleMatrix outputSoftMaxExp;
-    private static SimpleMatrix outputBias;
-    private static SimpleMatrix outputResults;
 
+    private MNISTDataset dataSet;
+    //Convolution filters, 8 3x3 matrices
+    private SimpleMatrix[] convFilters = new SimpleMatrix[CONV_FILTER_COUNT];
+    //Output layer parameters
+    private SimpleMatrix outputLayerFlatInput;
+    private SimpleMatrix outputLayerWeights;
+    private SimpleMatrix outputSoftMaxExp;
+    private SimpleMatrix outputBias;
+    private SimpleMatrix outputResults;
 
+    MnistDigitSFCNN() {
+        //dataSet = new MNISTPNGDataset();
+        //dataSet = new MNISTIDXDataset();
+    }
 
-    private static void eval(int count) {
+    public EvalResultMap eval(int count, EvalResultMap result, boolean print) {
         int accuracy = 0;
         for (int i=0; i < count; i++) {
-            IndexPair p = testCnn();
-            System.out.println("Sample label: " + p.row + ", Predicted label: " + p.column);
-            accuracy += (p.row == p.column) ? 1 : 0;
+            SamplePredictor p = test();
+            if (result != null) {
+                result.resultMap.put(p.index.value(), p);
+            }
+            if (print) {
+                System.out.println("Sample label: " + p.correctLabel + ", Predicted label: " + p.predictedLabel +
+                        ":" + p.index.value() + ":" + p.probForCorrectLabel);
+            }
+            accuracy += (p.correctLabel == p.predictedLabel) ? 1 : 0;
         }
-        System.out.println("Accuracy: " + (accuracy*100.0f)/count + "%");
+        Float percentAccuracy = accuracy * 100.0f/count;
+        if (result != null) {
+            result.metricsMap.put("PercentAccuracy", percentAccuracy );
+        }
+        if (print) {
+            System.out.println("Accuracy: " + percentAccuracy + "%");
+        }
+        return result;
     }
+
     public static void main(String[] args) {
         //TODO: Write trained model to file and read from there for eval.
-        trainCnn();
-        eval(100);
+        MnistDigitSFCNN cnn = new MnistDigitSFCNN();
+        cnn.init(new MNISTIDXDataset());
+        cnn.train(MNIST_CNN_TRAIN_STEPS_MAX);
+        cnn.eval(100, null, true);
+
         /*
-        System.out.println(MNISTDataset.test());
         try {
-            show(MNISTDataset.trainingSample().image);
+            //show(cnn.getDataSet().trainingSample().image);
+            cnn.show(cnn.getDataSet().trainingSample().bufferedImage());
         } catch(IOException e) {
             e.printStackTrace();
         }
         */
     }
 
+    public MNISTDataset getDataSet() {
+        return dataSet;
+    }
+
     @SuppressWarnings("deprecation")
-    public static void show(BufferedImage image) {
+    public void show(BufferedImage image) {
         // create the GUI for viewing the image if needed
         JFrame frame = new JFrame();
         //set image
@@ -79,7 +103,7 @@ public class CNN {
         frame.repaint();
     }
 
-    private static SimpleMatrix[] convolve(SimpleMatrix input, SimpleMatrix[] filters) {
+    private SimpleMatrix[] convolve(SimpleMatrix input, SimpleMatrix[] filters) {
         SimpleMatrix[] outputs = new SimpleMatrix[filters.length];
         for(int fn=0; fn < filters.length; fn++) {
             SimpleMatrix filter = filters[fn];
@@ -104,7 +128,7 @@ public class CNN {
         return outputs;
     }
 
-    private static void deconvolve(SimpleMatrix input, SimpleMatrix[] outputGradients) {
+    private void deconvolve(SimpleMatrix input, SimpleMatrix[] outputGradients) {
         int filterH = convFilters[0].numRows();
         int filterW = convFilters[0].numCols();
         int fLen = convFilters.length;
@@ -132,7 +156,7 @@ public class CNN {
         }
     }
 
-    private static SimpleMatrix[] maxPool(SimpleMatrix[] inputs) {
+    private SimpleMatrix[] maxPool(SimpleMatrix[] inputs) {
         SimpleMatrix[] outputs = new SimpleMatrix[inputs.length];
         for (int i = 0; i < inputs.length; i++) {
             SimpleMatrix input = inputs[i];
@@ -154,7 +178,7 @@ public class CNN {
         return outputs;
     }
 
-    private static SimpleMatrix[] maxPoolBackward(SimpleMatrix[] inputs,
+    private SimpleMatrix[] maxPoolBackward(SimpleMatrix[] inputs,
                                                   SimpleMatrix[] outputs, SimpleMatrix[] outputGradients) {
         SimpleMatrix[] inputGradients = new SimpleMatrix[CONV_FILTER_COUNT];
         for (int i=0; i<outputs.length; i++) {
@@ -174,7 +198,7 @@ public class CNN {
                     int q = k*MAXPOOL_FILTER_COLUMNS;
                     SimpleMatrix x = input.extractMatrix(p, p+MAXPOOL_FILTER_ROWS,
                             q, q+MAXPOOL_FILTER_COLUMNS);
-                    IndexPair indices = new SimpleMatrixEx(x).indexOfMax();
+                    Pair<Integer, Integer> indices = new SimpleMatrixEx(x).indexOfMax();
                     inputGradient.set(p+indices.row, q+indices.column, outputGradient.get(j, k));
                 }
             }
@@ -182,7 +206,7 @@ public class CNN {
         return inputGradients;
     }
 
-    private static SimpleMatrix outputForward(SimpleMatrix[] inputs) {
+    private SimpleMatrix outputForward(SimpleMatrix[] inputs) {
         outputLayerFlatInput = new SimpleMatrix(inputs.length, inputs[0].getNumElements());
         for (int i = 0; i < inputs.length; i++) {
             SimpleMatrix x = new SimpleMatrix(inputs[i]);
@@ -196,7 +220,7 @@ public class CNN {
         return outputSoftMaxExp.scale(outputSoftMaxInvSum);
     }
 
-    private static SimpleMatrix[] outputBackward(SimpleMatrix outGradient) {
+    private SimpleMatrix[] outputBackward(SimpleMatrix outGradient) {
         assert(outGradient.numRows()==1);
 
         SimpleMatrix inputLosses = new SimpleMatrix(outputLayerInputNodeCount,1);
@@ -231,13 +255,8 @@ public class CNN {
         return inputLossesArray;
     }
 
-    /*
-    We are just going to feed random sample images N times. Not implementing
-    batches with multiple epochs over the same data set, at this point.
-    TODO: Support mini-batches and epochs.
-     */
-    public static void trainCnn()
-    {
+    public void init(MNISTDataset ds) {
+        dataSet = (ds != null) ? ds : new MNISTIDXDataset();
         for (int i = 0; i < CONV_FILTER_COUNT; i++) {
             /*
             Using Xavier Uniform initialization.
@@ -257,26 +276,31 @@ public class CNN {
                 .divide((float)outputLayerInputNodeCount);
         outputBias = new SimpleMatrix(1, 10);
         outputBias.zero();
+    }
+
+    @Override
+    public void setDataset(MNISTDataset ds) {
+        dataSet = ds;
+    }
+
+    /*
+    We are just going to feed random sample images N times. Not implementing
+    batches with multiple epochs over the same data set, at this point.
+    TODO: Support mini-batches and epochs.
+     */
+    public void train(int stepCount)
+    {
         //Loss function
         float loss = 0;
         int accuracy = 0;
         int accTotal = 0;
 
-        for (int i = 0; i < MNIST_CNN_TRAIN_STEPS_MAX; i++) {
+        for (int i = 0; i < stepCount; i++) {
             try {
                 //load a random image from MNIST DB along with its label
-                MNISTImage sample = MNISTDataset.trainingSample();
-                BufferedImage sampleImage = sample.image;
-                int sampleLabel = sample.digit;
-                //create pixel matrix from sample image
-                int width = sampleImage.getWidth();
-                int height = sampleImage.getHeight();
-                int[] pxi = sampleImage.getRGB(0, 0, width, height, null, 0, width);
-                float[] pxf = new float[pxi.length];
-                for(int j = 0; j < pxi.length; j++) {
-                    pxf[j] = (pxi[j]>>16&0xff)/255.0f;
-                }
-                SimpleMatrix pixelMatrix = new SimpleMatrix(width, height, true, pxf);
+                MNISTImage sample = dataSet.trainingSample();
+                int sampleLabel = sample.getDigit();
+                SimpleMatrix pixelMatrix = sample.simpleMatrixFloat0To1();
                 //forward propagation
                 SimpleMatrix[] convOutput = convolve(pixelMatrix, convFilters);
                 SimpleMatrix[] maxPoolOutput = maxPool(convOutput);
@@ -297,7 +321,7 @@ public class CNN {
                         )
                 );
                 if(i%100 == 0) {
-                    System.out.println(" Step: "+ i+ " loss: "+ loss/100.0+" accuracy: "+ accuracy);
+                    //System.out.println(" Step: "+ i+ " loss: "+ loss/100.0+" accuracy: "+ accuracy);
                     loss = 0;
                     accTotal += accuracy;
                     accuracy = 0;
@@ -308,36 +332,60 @@ public class CNN {
                 System.exit(-1);
             }
         }
-        System.out.println("Average accuracy: " + (accTotal*100.0f)/MNIST_CNN_TRAIN_STEPS_MAX + "%");
+        //System.out.println("Average accuracy: " + (accTotal*100.0f)/stepCount + "%");
     }
 
     //returns digit values from 0 to 9, or negative numbers for error
-    public static IndexPair testCnn()
+    public SamplePredictor test()
     {
-        IndexPair result = new IndexPair(-1, -1);
+        SamplePredictor pr = new SamplePredictor();
         try {
-            //load a random image from MNIST DB along with its label
-            MNISTImage sample = MNISTDataset.testSample();
-            BufferedImage sampleImage = sample.image;
-            result.row = sample.digit;
-            //create pixel matrix from sample image
-            int width = sampleImage.getWidth();
-            int height = sampleImage.getHeight();
-            int[] pxi = sampleImage.getRGB(0, 0, width, height, null, 0, width);
-            float[] pxf = new float[pxi.length];
-            for(int j = 0; j < pxi.length; j++) {
-                pxf[j] = (pxi[j]>>16&0xff)/255.0f;
-            }
-            SimpleMatrix pixelMatrix = new SimpleMatrix(width, height, true, pxf);
+            //load an image from MNIST DB along with its label. Selection
+            //strategy depends on logic in the data set class.
+            MNISTImage sample = dataSet.testSample();
+            SimpleMatrix pixelMatrix = sample.simpleMatrixFloat0To1();
+            pr.index = sample.id();
+            pr.correctLabel = sample.getDigit();
             //forward propagation
             SimpleMatrix[] convOutput = convolve(pixelMatrix, convFilters);
             SimpleMatrix[] maxPoolOutput = maxPool(convOutput);
             outputResults = outputForward(maxPoolOutput);
-            result.column = new SimpleMatrixEx(outputResults).indexOfMax().column;
+            SimpleMatrixEx outputEx = new SimpleMatrixEx(outputResults);
+            pr.predictedLabel = outputEx.indexOfMax().column;
+            pr.probForCorrectLabel = (float)(outputResults.get(0, pr.correctLabel));
+            pr.probForPrediction = (float)(outputEx.elementMax());
+            List <Double> l = outputEx.elementList();
+            Collections.sort(l, Collections.reverseOrder());
+            pr.topTwoProbDiff = (float)(l.get(0) - l.get(1));
+            pr.largestProbDiff = (float)(l.get(0) - l.get(l.size()-1));
+            ListIterator<Double> iter = l.listIterator();
+            double entropy = 0;
+            while (iter.hasNext()) {
+                double p = iter.next();
+                entropy = entropy - p*Math.log10(p);
+            }
+            pr.entropy = (float)entropy;
         } catch (IOException e) {
             e.printStackTrace();
             System.exit(-1);
         }
-        return result;
+        return pr;
+    }
+
+    @Override
+    public MNISTModel deepCopy() {
+        MnistDigitSFCNN newModel = new MnistDigitSFCNN();
+        //dataset is not deep copied. If the specific dataset maintains state,
+        //it is upto the caller to set a new one with the desired state.
+        newModel.dataSet = dataSet;
+        newModel.outputBias = outputBias.copy();
+        for (int i=0; i < CONV_FILTER_COUNT; i++) {
+            newModel.convFilters[i] = convFilters[i].copy();
+        }
+        newModel.outputLayerFlatInput = outputLayerFlatInput.copy();
+        newModel.outputLayerWeights = outputLayerWeights.copy();
+        newModel.outputSoftMaxExp = outputSoftMaxExp.copy();
+        newModel.outputResults = outputResults.copy();
+        return newModel;
     }
 }

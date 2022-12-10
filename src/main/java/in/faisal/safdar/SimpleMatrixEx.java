@@ -1,8 +1,8 @@
 package in.faisal.safdar;
 
 import org.ejml.simple.SimpleMatrix;
-
-import java.security.KeyPair;
+import java.util.ArrayList;
+import java.util.List;
 
 public class SimpleMatrixEx {
     //v0.41 does not have elementMax, only elementMaxAbs
@@ -25,6 +25,17 @@ public class SimpleMatrixEx {
         return max;
     }
 
+    public List<Double> elementList() {
+        List<Double> elist = new ArrayList(matrix.numRows()*matrix.numCols());
+        for (int i = 0; i < matrix.numRows(); i++) {
+            for (int j = 0; j < matrix.numCols(); j++) {
+                double d = matrix.get(i, j);
+                elist.add(d);
+            }
+        }
+        return elist;
+    }
+
     //return e^(a[i,j])
     public SimpleMatrix exp() {
         SimpleMatrix m = new SimpleMatrix(matrix);
@@ -38,9 +49,9 @@ public class SimpleMatrixEx {
     }
 
     //return index of max element
-    public IndexPair indexOfMax() {
+    public Pair<Integer, Integer> indexOfMax() {
         double max = matrix.get(0, 0);
-        IndexPair p = new IndexPair(0, 0);
+        Pair<Integer, Integer> p = new Pair<>(0, 0);
         for (int i = 0; i < matrix.numRows(); i++) {
             for (int j = 0; j < matrix.numCols(); j++) {
                 double d = matrix.get(i, j);

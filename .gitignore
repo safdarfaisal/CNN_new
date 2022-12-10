@@ -5,3 +5,4 @@ data/
 gradle/
 gradlew
 gradlew.bat
+output/*.txt
