@@ -4,6 +4,8 @@
 
 # Active Learning and using it on a CNN
 
+- Safdar Faisal, 2022-12-11
+
 <!-- @import "[TOC]" {cmd="toc" depthFrom=2 depthTo=6 orderedList=false} -->
 
 <!-- code_chunk_output -->
