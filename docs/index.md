@@ -1,6 +1,9 @@
+<script type="text/javascript" id="MathJax-script" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+</script>
 ## Active Learning and using it on a CNN
 
-What is actve learning? How does it help? Where can we use it?
+What is active learning? How does it help? Where can we use it?
 
 Active learning refers to a group of methods in machine learning that allow a model to learn using unlabelled data that is provided during the training process. The model learns how to prioritize labelling data points based on existing labelled data. There are multiple ways in which this labelled data can be queried by the model. They include:
 1.	Random Sampling: A random subset of the data is chosen for labelling
