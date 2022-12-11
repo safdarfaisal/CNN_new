@@ -27,13 +27,13 @@ There are many methods when it comes to active learning algorithms. A few of whi
 
 **Least Confidence Method:** Here the samples that need to be labelled are selected when the model gives the lowest confidence probability for the output class. This is done over multiple Iterations/stages to generate labelled data. 
 
-$$\hat{x} = \underset{i}{min}\left(\underset{\theta}{argmax}\left(P(y | x \right)\right)$$
+$$\hat{x} = \underset{i}{min}\left(\underset{\theta}{\mathrm{arg\,max}}\left(P(y | x \right)\right)$$
 
 One advantage of the method of least confidence is that it is simple and easy to implement. It only requires the model to make predictions on the unlabeled samples and select the one with the lowest predicted probability for the correct class. However, it also has some limitations. For example, it may not always select the most informative samples, particularly if the model has high uncertainty or is not well-calibrated. It may also be susceptible to noise or outliers in the data. Overall, the method of least confidence can be a useful technique for uncertainty sampling in some situations, but it may not be the most effective approach in all cases.
 
 **Smallest Margin Sample:** Smallest margin sampling is a technique for uncertainty sampling in active learning where the goal is to select samples where the model has the smallest margin of confidence in its predictions. This approach assumes that samples where the model is less confident are more likely to be informative and improve the model's performance.
 
-$$x = \underset{x}{\argmin}\,P_\theta(y_1|x) - P_\theta(y_2|x)$$
+$$x = \underset{x}{\mathrm{arg\,min}}\,P_\theta(y_1|x) - P_\theta(y_2|x)$$
 
 Here, $y_1$ refers to the class with the highest confidence and $y_2$ refers to the class with the second highest confidence.
 
@@ -58,13 +58,13 @@ To implement query by committee, the data is first divided into a training set a
 **Algorithms used in QBC:**  
 a) **Vote Entropy**: Vote entropy is a measure of the uncertainty or randomness in the models' predictions. It is calculated by taking the sum of the negative of the predicted probabilities for each class, multiplied by the log of the predicted probabilities. A high vote entropy indicates that the models have high uncertainty in their predictions, whereas a low vote entropy indicates that the models are more confident and consistent in their predictions.
 
-$$x = \underset{x}{\argmax} \left(-\underset{i}{\sum}\frac{V(y_i)}{C}\log\frac{V(y_i)}{C} \right)$$
+$$x = \underset{x}{\mathrm{arg\,max}} \left(-\underset{i}{\sum}\frac{V(y_i)}{C}\log\frac{V(y_i)}{C} \right)$$
 
 Here $V(y_i)$ refers to the number of votes the $i$th class recieves and C is the committee size.
 
 b) **KL Divergence:** KL divergence, also known as Kullback-Leibler divergence, is a measure of the difference between two probability distributions. In the context of QBC, it is used to compare the predicted probabilities of the models for each sample. A high KL divergence indicates that the models have significantly different predicted probabilities, whereas a low KL divergence indicates that the models have similar predicted probabilities.
 
-$$x = \underset{x}{\argmax}\left(\frac{1}{C}\sum\limits^C_{c=1}D\left(P_{\theta(c)}||P_C\right)\right)$$
+$$x = \underset{x}{\mathrm{arg\,max}}\left(\frac{1}{C}\sum\limits^C_{c=1}D\left(P_{\theta(c)}||P_C\right)\right)$$
 
 Here, $c$ refers to the $c$th model within the committee and $C$ is the number of models in the committee. 
 
