@@ -32,7 +32,7 @@ set style line 6 \
     pointtype 7 pointsize 0.5
 
 set title "Learning Curves for Active Learning"
-set yrange [30:100]
+set yrange [40:85]
 set ylabel "Accuracy"
 set xlabel "Active Learning Stages"
 
