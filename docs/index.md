@@ -1,7 +1,27 @@
 <script type="text/javascript" id="MathJax-script" async
   src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
 </script>
-## Active Learning and using it on a CNN
+
+# Active Learning and using it on a CNN
+
+<!-- @import "[TOC]" {cmd="toc" depthFrom=2 depthTo=6 orderedList=false} -->
+
+<!-- code_chunk_output -->
+
+- [Introduction](#introduction)
+- [Active Learning Strategies Considered](#active-learning-strategies-considered)
+  - [Uncertainty Sampling](#uncertainty-sampling)
+  - [Query by committee](#query-by-committee)
+- [The Dataset](#the-dataset)
+- [The benchmark model](#the-benchmark-model)
+- [Experiment Design](#experiment-design)
+- [Results](#results)
+- [Discussion](#discussion)
+- [Future Prospects](#future-prospects)
+
+<!-- /code_chunk_output -->
+
+## Introduction
 
 What is active learning? How does it help? Where can we use it?
 
@@ -19,11 +39,11 @@ Active Learning helps to reduce the effort needed to generate labels for every d
 
 My aim when I started this project was to answer the first three questions. This was to be done by implementing different methods for active learning and testing to see if the accuracy was comparable to that seen with all the points already labelled.
 
-### The methods explored here 
+## Active Learning Strategies Considered 
 
 There are many methods when it comes to active learning algorithms. A few of which are expanded upon in this section.
 
-#### Uncertainity Sampling
+### Uncertainty Sampling
 
 **Least Confidence Method:** Here the samples that need to be labelled are selected when the model gives the lowest confidence probability for the output class. This is done over multiple Iterations/stages to generate labelled data. 
 
@@ -49,7 +69,7 @@ $$\mathrm{Entropy} = \underset{i}{\sum} \left(-P_\theta(y|x)\cdot\log P_\theta(y
 
 To implement entropy sampling, the model is first applied to the pool of unlabeled samples and the predicted probabilities for each sample are calculated. The sample with the highest entropy, which is a measure of the uncertainty or randomness in the model's predictions, is then selected for labeling. This process is repeated until a sufficient number of samples have been labeled and the model can be updated.
 
-#### Query by committee
+### Query by committee
 
 Query by committee is a technique for selecting samples for active learning where multiple models are trained on the same data and their predictions are compared. The idea is that if multiple models make different predictions on a particular sample, it is likely to be more informative and useful for training the overall model.
 
@@ -74,7 +94,7 @@ $\theta^{(c)}$ refers to a model in the committee and,
 
 $$P_C(y_i|x) = \frac{1}{C}\sum\limits^C_{c=1} P_{\theta(c)}(y_i|x)$$
 
-### The Dataset
+## The Dataset
 The dataset that we have decided to use is the MNIST dataset. The MNIST dataset is a set of handwritten digits of size 28x28. The dataset was taken from Kaggle. It consists of 60,000 images for the training dataset and 10,000 for the test dataset. Each image is labelled with a value between zero to nine. 
 
 >![2](./MNIST.png)
@@ -83,7 +103,7 @@ The dataset that we have decided to use is the MNIST dataset. The MNIST dataset 
 
 Models designed to tackle this classification problem are normally those used in image processing systems. They attempt to decipher handwritten images and convert it into digits. An extended version of MNIST known as EMNIST also provides images of uppercase and lowercase alphabets which is kept in the same 28x28 pixel format. I however keep my analysis to just the original MNIST dataset.
 
-### The benchmark model
+## The benchmark model
 
 ![1](./model.png)
 
@@ -94,24 +114,24 @@ We plan to use [a basic CNN model](https://github.com/safdarfaisal/CNN_new) with
 4.	Softmax activations
 Upon training the model with 10000 images using just passive learning, we were able to generate an accuracy of around 85%.
 
-### Experiment Design
+## Experiment Design
 
 1. We selected 10000 samples from the MNIST digits training dataset in random. 
 2. Out of the 10000 samples, 1000 samples were randomly chosen to be the initial training set.
 3. The remaining 9000 samples were considered to be the unlabeled set.
 4. 100 samples were selected at random from the MNIST digit training dataset to form the test set.
-4. The CNN model was trained on the 1000 images that made up the training set.
-5. The CNN model was evaluated on the test set and accuracy was recorded.
-5. Four additional models were required for the committee for the two QBC strategies. The same CNN model was instantiated 4 different times with different initial weights (Uniform Xavier intialization) to create these additional models.
-6. The additional models were also trained on the training set.
-7. The unlabeled set was divided randomly into 10 stages, each with 1000 samples. 
-8. Within each stage, the sample selections strategies were applied on pools of 100 samples each, such that one sample was selected from each pool according to the selection metric for the strategy. This was done by evaluating the main and committee models against the test set and applying the selection respective strategies. This was done by evaluating. At the end of the stage, ten samples were selected.
-9. For each strategy, the 10 selected samples were used to incrementaly train the main model and the committee models. The main model was evaluated against the test set and accuracy values were recorded.
-10. The procedure in (9) was repeated for all 10 stages and the generated accuracy were used to plot learning curves for all strategies
+5. The CNN model was trained on the 1000 images that made up the training set.
+6. The CNN model was evaluated on the test set and accuracy was recorded.
+7. Four additional models were required for the committee for the two QBC strategies. The same CNN model was instantiated 4 different times with different initial weights (Uniform Xavier intialization) to create these additional models.
+8. The additional models were also trained on the training set.
+9. The unlabeled set was divided randomly into 10 stages, each with 1000 samples. 
+10. Within each stage, the sample selections strategies were applied on pools of 100 samples each, such that one sample was selected from each pool according to the selection metric for the strategy. This was done by evaluating the main and committee models against the test set and applying the selection respective strategies. This was done by evaluating. At the end of the stage, ten samples were selected.
+11. For each strategy, the 10 selected samples were used to incrementaly train the main model and the committee models. The main model was evaluated against the test set and accuracy values were recorded.
+12. The procedure in (9) was repeated for all 10 stages and the generated accuracy were used to plot learning curves for all strategies
 
 The entire framework was written from scratch in Java and GNUPlot was used for plotting.
 
-### Results
+## Results
 
 Our major focus was on identifying good strategies to identify samples for labelling when trying to classify digits in the MNIST dataset using a CNN.
 
@@ -128,7 +148,7 @@ The above graph illustrates the pattern, although the actual accuracy numbers fo
 QBC with max KL divergence conistently showed abnormal behaviour through multiple trials. Classification accuracy kept dropping as more selected samples were trained. When least divergent samples were selected, results were similar to that obtained for random selection. 
 
 
-### Discussion
+## Discussion
 
 We have seen that active learning methods are very powerful tools that can be used to augment our models providing more value for significantly lower effort. Approximately, 10% improvement in accuracy was observed with 90 samples selected using active learning. The same improvement was observed only after labelling ~1500 samples with randomly selected passive learning. This represents a 94% reduction in terms of the labelling cost/effort. The savings would be lower as we train further towards higher accuracy numbers, but they are still expected to be significant. 
 
@@ -136,7 +156,7 @@ We have seen that active learning methods are very powerful tools that can be us
 
 We tried to analyze the abnormal behavior of KL divergence. As can be seen in the above figure, average divergence from consensus was always higher for the digit 0 and all the 90 samples provided by active learning represented 0. This would have skewed the weights to reduce classification accuracy for other digits. The reason for higher divergence for digit 0 needs to be studied further.
 
-#### Future Prospects
+## Future Prospects
 
 There are more methods that have yet to be implemented. They include, but aren't limited to:
 
