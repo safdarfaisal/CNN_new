@@ -1,8 +1,13 @@
 package in.faisal.safdar;
 
-import java.util.ArrayList;
+import org.apache.commons.lang3.tuple.Triple;
+
+import java.awt.*;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 //TODO: Should convert all code to be functional later. Use more exceptions for error cases too.
 public class ALSampleFeedingStrategy {
@@ -61,6 +66,10 @@ public class ALSampleFeedingStrategy {
         }
         testSet = ds.testSubset(100);
         return true;
+    }
+
+    public MNISTDataset rootDataSource() {
+        return ds;
     }
 
     public MNISTDataset createTrainingDataSource() {
@@ -146,14 +155,15 @@ public class ALSampleFeedingStrategy {
         model.train(l.size());
         res = model.eval(testSet.size(), res, false);
         Map<String, Object> metricsMap = res.metricsMap;
-        metrics.stageMetrics.add(metricsMap);
 
         if (metrics.debug && (metrics.name.equals("QBCKLDivergence") || metrics.name.equals("QBCVoteEntropy") ||
                 metrics.name.equals("UncertaintySmallestMargin"))) {
             //System.out.println(metrics.name + " " + String.valueOf(stageId));
             //l.forEach(s -> System.out.println(s.value()));
-            ImageDisplay.show(l, ds, metrics.name + " " + String.valueOf(stageId));
+            metricsMap.put("StageLabels", l);
+            //ImageDisplay.show(l, ds, metrics.name + " " + String.valueOf(stageId));
         }
+        metrics.stageMetrics.add(metricsMap);
 
         if (auxModels != null) {
             auxModels.forEach(
@@ -179,60 +189,82 @@ public class ALSampleFeedingStrategy {
 
     public static void main(String[] args) {
         //TODO: Maybe move this to an experiment class later so that multiple experiments can be supported.
-        List<ALMetricsStrategy> ml = new ArrayList(2);
         int stageCount = 9;
-        ALMetricsStrategy alms = new ALMetricsStrategy("UncertaintyLeastConfidence", true);
-        ALSampleFeedingStrategy s = ALSampleFeedingStrategy.create(new MNISTIDXDataset(),
-                1000, stageCount, 1000, 10, new ALSampleSelectorLeastConfidence(),
+        ALSampleSelectionStrategy[] strategies = new ALSampleSelectionStrategy[]{
+                new ALSampleSelectorLeastConfidence(),
+                new ALSampleSelectorSmallestMargin(),
+                new ALSampleSelectorLargestMargin(),
+                new ALSampleSelectorEntropy(),
+                new ALSampleSelectorQBCVoteEntropy(),
+                new ALSampleSelectorQBCKLDivergence(),
+                new ALSampleSelectorRandom()
+        };
+        List<ALMetricsStrategy> ml = new ArrayList<>(10);
+        Map<String, ALSampleFeedingStrategy> sampleFeeders = new HashMap<>();
+        MNISTDataset ds = new MNISTIDXDataset();
+        //train the first strategy alone.
+        ALMetricsStrategy alms = new ALMetricsStrategy(strategies[0].name(), true);
+        ALSampleFeedingStrategy s = ALSampleFeedingStrategy.create(ds,
+                1000, stageCount, 1000, 10, strategies[0],
                 alms);
         ml.add(alms);
+        sampleFeeders.put(strategies[0].name(), s);
         //auxModels are created and passed here because we want to use the training cache for QBC.
         //The downside is that auxModels will be trained for stages too for all strategies.
         List<MNISTModel> auxModels = new ArrayList<>();
         for (int j = 0; j < 4; j++) {
             auxModels.add(new MnistDigitSFCNN());
         }
+        assert s != null;
         s.train(new MnistDigitSFCNN(), auxModels);
-        //clone runner so that we do not train from scratch every time
-        alms = alms.cloneRefurbished("UncertaintySmallestMargin");
-        ml.add(alms);
-        ALSampleFeedingStrategy s1 =
-                s.cloneRefurbished(new MNISTIDXDataset(), new ALSampleSelectorSmallestMargin(), alms);
-        alms = alms.cloneRefurbished("UncertaintyLargestMargin");
-        ml.add(alms);
-        ALSampleFeedingStrategy s2 =
-                s.cloneRefurbished(new MNISTIDXDataset(), new ALSampleSelectorLargestMargin(), alms);
-        alms = alms.cloneRefurbished("UncertaintyEntropy");
-        ml.add(alms);
-        ALSampleFeedingStrategy s3 =
-                s.cloneRefurbished(new MNISTIDXDataset(), new ALSampleSelectorEntropy(), alms);
-        alms = alms.cloneRefurbished("QBCVoteEntropy");
-        ml.add(alms);
-        ALSampleFeedingStrategy s4 =
-                s.cloneRefurbished(new MNISTIDXDataset(), new ALSampleSelectorQBCVoteEntropy(), alms);
-        alms = alms.cloneRefurbished("QBCKLDivergence");
-        ml.add(alms);
-        ALSampleFeedingStrategy s5 =
-                s.cloneRefurbished(new MNISTIDXDataset(), new ALSampleSelectorQBCKLDivergence(), alms);
-        alms = alms.cloneRefurbished("RandomFromPool");
-        ml.add(alms);
-        ALSampleFeedingStrategy s6 =
-                s.cloneRefurbished(new MNISTIDXDataset(), new ALSampleSelectorRandom(), alms);
-        for (int i = 0; i < stageCount; i++) {
-            //TODO: these stages can be run in parallel in threads (ensure concurrency)
-            s.runStage(i);
-            s1.runStage(i);
-            s2.runStage(i);
-            s3.runStage(i);
-            s4.runStage(i);
-            s5.runStage(i);
-            s6.runStage(i);
-        }
-        ml.forEach(
-                metric -> {
-                    metric.createOutputForGnuPlot("output");
+
+        //just clone runner for the remaining strategies.
+        Arrays.stream(strategies).skip(1).forEach(
+                strategy -> {
+                    ALMetricsStrategy ms = alms.cloneRefurbished(strategy.name());
+                    ml.add(ms);
+                    sampleFeeders.put(
+                            strategy.name(),
+                            s.cloneRefurbished(ds, strategy, ms)
+                    );
                 }
         );
+        //run stages for all strategies
+        //TODO: these stages can be run in parallel in threads (ensure concurrency)
+        IntStream.range(0, stageCount).forEach(i -> sampleFeeders.forEach((j, feeder) -> feeder.runStage(i)));
+        //create data files for plotting learning curves
+        //ml.forEach(metric -> metric.createOutputForGnuPlot("output"));
+        List<Image> l = ml.stream().flatMap(
+                m -> {
+                    m.createOutputForGnuPlot("output");
+                    return m.stageLabelsStream();
+                }
+        ).flatMap(
+                t -> t.getRight().orElseGet(ArrayList::new).stream().map(
+                        sample -> Triple.of(t.getMiddle(), t.getLeft(), sample)
+                )
+        ).collect(
+                Collectors.groupingBy(
+                        Triple::getLeft, Collectors.groupingBy(
+                                Triple::getMiddle, Collectors.mapping(
+                                        Triple::getRight, Collectors.toList()
+                                )
+                        )
+                )
+        ).entrySet().stream().map(
+                mel -> ImageDisplay.gridImages(
+                        mel.getValue().entrySet().stream().map(
+                                el -> ImageDisplay.gridImages(
+                                        ImageDisplay.sampleIdsToImages(el.getValue(), ds),
+                                        20, Color.white,
+                                        5, el.getKey() + " " + String.valueOf(mel.getKey())
+                                )
+                        ).toList(), 20, Color.white, 7,
+                        "Stage: " + String.valueOf(mel.getKey())
+                )
+        ).toList();
+        Image im = ImageDisplay.gridImages(l, 20, Color.white, 1, "Images labeled in stages");
+        ImageDisplay.show(im);
         System.out.println("Done");
     }
 }

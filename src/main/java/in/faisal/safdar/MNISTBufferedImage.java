@@ -8,9 +8,9 @@ import java.awt.image.BufferedImage;
 represents a single image in MNIST database.
  */
 public class MNISTBufferedImage implements MNISTImage {
-    private BufferedImage image;
-    private int digit;
-    private SampleId id;
+    private final BufferedImage image;
+    private final int digit;
+    private final SampleId id;
 
     MNISTBufferedImage(BufferedImage img, int d, SampleId i) {
         image = img;

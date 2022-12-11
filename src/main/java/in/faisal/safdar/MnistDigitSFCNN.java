@@ -28,12 +28,12 @@ public class MnistDigitSFCNN implements MNISTModel {
     public static final int MAXPOOL_FILTER_ROWS = 2;
     public static final int MAXPOOL_FILTER_COLUMNS = 2;
     public static final float LEARNING_RATE = 0.003f;
-    private static int outputLayerInputNodeCount =
+    private static final int outputLayerInputNodeCount =
             fanOut*CONV_FILTER_COUNT/(MAXPOOL_FILTER_ROWS*MAXPOOL_FILTER_COLUMNS);
 
     private MNISTDataset dataSet;
     //Convolution filters, 8 3x3 matrices
-    private SimpleMatrix[] convFilters = new SimpleMatrix[CONV_FILTER_COUNT];
+    private final SimpleMatrix[] convFilters = new SimpleMatrix[CONV_FILTER_COUNT];
     //Output layer parameters
     private SimpleMatrix outputLayerFlatInput;
     private SimpleMatrix outputLayerWeights;
@@ -75,15 +75,6 @@ public class MnistDigitSFCNN implements MNISTModel {
         cnn.init(new MNISTIDXDataset());
         cnn.train(MNIST_CNN_TRAIN_STEPS_MAX);
         cnn.eval(100, null, true);
-
-        /*
-        try {
-            //show(cnn.getDataSet().trainingSample().image);
-            show(cnn.getDataSet().trainingSample().bufferedImage());
-        } catch(IOException e) {
-            e.printStackTrace();
-        }
-        */
     }
 
     public MNISTDataset getDataSet() {
@@ -308,7 +299,7 @@ public class MnistDigitSFCNN implements MNISTModel {
                         )
                 );
                 if(i%100 == 0) {
-                    //System.out.println(" Step: "+ i+ " loss: "+ loss/100.0+" accuracy: "+ accuracy);
+                    System.out.println(" Step: "+ i+ " loss: "+ loss/100.0+" accuracy: "+ accuracy);
                     loss = 0;
                     accTotal += accuracy;
                     accuracy = 0;
@@ -342,7 +333,7 @@ public class MnistDigitSFCNN implements MNISTModel {
             pr.probForCorrectLabel = (float)(outputResults.get(0, pr.correctLabel));
             pr.probForPrediction = (float)(outputEx.elementMax());
             List <Double> l = outputEx.elementList();
-            Collections.sort(l, Collections.reverseOrder());
+            l.sort(Collections.reverseOrder());
             pr.topTwoProbDiff = (float)(l.get(0) - l.get(1));
             pr.largestProbDiff = (float)(l.get(0) - l.get(l.size()-1));
             ListIterator<Double> iter = l.listIterator();

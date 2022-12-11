@@ -7,11 +7,11 @@ import java.awt.image.BufferedImage;
 //TODO: Inheritance vs delegate handling for all cases
 
 public class MNISTIdxImage implements MNISTImage {
-    private byte[] imgBytes;
-    private int digit;
-    private int width;
-    private int height;
-    private SampleId id;
+    private final byte[] imgBytes;
+    private final int digit;
+    private final int width;
+    private final int height;
+    private final SampleId id;
 
     MNISTIdxImage(byte[] bytes, int d, int w, int h, SampleId i) {
         imgBytes = bytes;

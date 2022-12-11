@@ -84,7 +84,7 @@ public class MNISTIDXDataset implements MNISTDataset {
 
     @Override
     public MNISTImage trainingSample(SampleId index) throws IOException {
-        return sampleNth(Integer.valueOf(index.value()), trainingImageCount, trainingImages, trainingLabels);
+        return sampleNth(Integer.parseInt(index.value()), trainingImageCount, trainingImages, trainingLabels);
     }
 
     @Override

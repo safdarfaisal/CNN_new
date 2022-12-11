@@ -18,6 +18,11 @@ committeeClassProb = (sumAcrossCommittees(modelClassProb))/C
 C is the committee size
 */
 public class ALSampleSelectorQBCKLDivergence implements ALSampleSelectionStrategy{
+    @Override
+    public String name() {
+        return "QBCKLDivergence";
+    }
+
     public List<SampleId> selectSamplesForLabeling(ALSampleFeederDataset samples,
                                                    MNISTModel model, List<MNISTModel> auxModels) {
         class FlatSample {
@@ -57,7 +62,7 @@ public class ALSampleSelectorQBCKLDivergence implements ALSampleSelectionStrateg
                     return fs;
                 });
             });
-        }).flatMap(identity()).collect(Collectors.toList());
+        }).flatMap(identity()).toList();
 
         //Sample->Class->aveClassProbAcrossModels
         Map<String, Map<Integer, Double>> committeeClassProbs =

@@ -7,7 +7,7 @@ import java.util.List;
 
 public class SimpleMatrixEx {
     //v0.41 does not have elementMax, only elementMaxAbs
-    private SimpleMatrix matrix;
+    private final SimpleMatrix matrix;
 
     SimpleMatrixEx(SimpleMatrix m) {
         matrix = m;
@@ -27,7 +27,7 @@ public class SimpleMatrixEx {
     }
 
     public List<Double> elementList() {
-        List<Double> elist = new ArrayList(matrix.numRows()*matrix.numCols());
+        List<Double> elist = new ArrayList<>(matrix.numRows()*matrix.numCols());
         for (int i = 0; i < matrix.numRows(); i++) {
             for (int j = 0; j < matrix.numCols(); j++) {
                 double d = matrix.get(i, j);

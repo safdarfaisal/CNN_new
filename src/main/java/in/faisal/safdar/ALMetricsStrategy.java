@@ -1,9 +1,14 @@
 package in.faisal.safdar;
 
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
+
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 public class ALMetricsStrategy {
     String name;
@@ -20,37 +25,29 @@ public class ALMetricsStrategy {
         this.debug = debug;
     }
 
+    public String getName() {
+        return name;
+    }
+
     ALMetricsStrategy cloneRefurbished(String newName) {
         ALMetricsStrategy clone = new ALMetricsStrategy(newName, debug);
-        globalMetrics.entrySet().forEach(
-                entry -> {
-                    clone.globalMetrics.put(entry.getKey(), entry.getValue());
-                }
-        );
+        clone.globalMetrics.putAll(globalMetrics);
         stageMetrics.forEach(
                 map -> {
-                    Map<String, Object> m = new HashMap<>();
-                    map.entrySet().forEach(
-                            entry -> {
-                                m.put(entry.getKey(), entry.getValue());
-                            }
-                    );
+                    Map<String, Object> m = new HashMap<>(map);
                     clone.stageMetrics.add(m);
                 }
         );
         return clone;
     }
 
-    void createOutputForGnuPlot(String plotDataFolderPath)
-    {
+    void createOutputForGnuPlot(String plotDataFolderPath) {
         //filter for each metric later when we have multiple.
         String outFile = plotDataFolderPath + "/" + name + ".txt";
         try {
             BufferedWriter writer = new BufferedWriter(new FileWriter(outFile));
             int i = 0;
-            ListIterator<Map<String, Object>> iter = stageMetrics.listIterator();
-            while (iter.hasNext()) {
-                Map<String, ?> metric = iter.next();
+            for (Map<String, ?> metric : stageMetrics) {
                 writer.write(String.valueOf(i));
                 writer.write(" ");
                 writer.write(String.valueOf(metric.get("PercentAccuracy")));
@@ -58,8 +55,16 @@ public class ALMetricsStrategy {
                 i++;
             }
             writer.close();
-        } catch(IOException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    Stream<Triple<String, Integer, Optional<List<SampleId>>>> stageLabelsStream() {
+        return IntStream.range(0, stageMetrics.size()).mapToObj(
+                i -> (Triple.of(
+                        name, i, Optional.ofNullable((List<SampleId>) (stageMetrics.get(i).get("StageLabels"))))
+                )
+        );
     }
 }

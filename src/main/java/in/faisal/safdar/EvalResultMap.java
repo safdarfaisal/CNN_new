@@ -8,7 +8,7 @@ public class EvalResultMap {
     Map<String, Object> metricsMap;
 
     EvalResultMap() {
-        resultMap = new HashMap();
-        metricsMap = new HashMap();
+        resultMap = new HashMap<>();
+        metricsMap = new HashMap<>();
     }
 }

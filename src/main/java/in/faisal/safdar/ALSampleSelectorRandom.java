@@ -7,6 +7,11 @@ import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class ALSampleSelectorRandom implements ALSampleSelectionStrategy {
+    @Override
+    public String name() {
+        return "RandomFromPool";
+    }
+
     public List<SampleId> selectSamplesForLabeling(ALSampleFeederDataset samples,
                                                    MNISTModel model, List<MNISTModel> auxModels) {
         int r = ThreadLocalRandom.current().nextInt(0, samples.testSampleCount());

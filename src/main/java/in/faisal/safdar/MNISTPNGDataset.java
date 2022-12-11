@@ -20,6 +20,7 @@ public class MNISTPNGDataset implements MNISTDataset {
         String imageFolderPath = dataFolderName + "/" + rand;
         //System.out.println(imageFolderPath);
         String[] imageFilePathList = (new File(imageFolderPath)).list();
+        assert imageFilePathList != null;
         int r = ThreadLocalRandom.current().nextInt(0, imageFilePathList.length);
         return imageFolderPath + "/" + imageFilePathList[r];
     }

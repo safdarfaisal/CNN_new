@@ -5,13 +5,11 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class ImageDisplay {
-    @SuppressWarnings("deprecation")
-    public static void show(List<SampleId> sampleList, MNISTDataset ds, String text) {
-        List<Image> l = sampleList.stream().map(s -> {
-            Image im = new BufferedImage(28,28,3);
+    public static List<Image> sampleIdsToImages(List<SampleId> sampleList, MNISTDataset ds) {
+        return sampleList.stream().map(s -> {
+            java.awt.Image im = new BufferedImage(28,28,3);
             try {
                 im = ds.trainingSample(s).bufferedImage();
             } catch(IOException ex) {
@@ -19,7 +17,9 @@ public class ImageDisplay {
             }
             return im;
         }).toList();
-        show(gridImages(l, 20, Color.white, 5, text));
+    }
+    public static void show(List<SampleId> sampleList, MNISTDataset ds, String text) {
+        show(gridImages(sampleIdsToImages(sampleList, ds), 20, Color.white, 5, text));
     }
 
     public static void show(Image image) {
@@ -43,9 +43,9 @@ public class ImageDisplay {
      * @param bg background color
      * @param columns number of columns
      *
-     * @return  merged image
+     * @return merged image
      *
-     * Thanks to http://www.java2s.com/example/java-utility-method/bufferedimage-merge/mergeimages-list-images-int-space-color-bg-1d30c.html
+     * Thanks to <a href="http://www.java2s.com/example/java-utility-method/bufferedimage-merge/mergeimages-list-images-int-space-color-bg-1d30c.html">Java2S utility examples</a>
      */
     public static Image gridImages(List<Image> images, int space, Color bg, int columns, String text) {
         if (images.size() == 1) {
@@ -54,7 +54,7 @@ public class ImageDisplay {
 
         int maxHeight = 0;
         int maxWidth = 0;
-        int rows = (int) (images.size() / (double) columns + 1);
+        int rows = (int) (images.size() / (double) columns);
 
         if (rows == 0) {
             rows = 1;
@@ -73,7 +73,7 @@ public class ImageDisplay {
         }
 
         BufferedImage bImage = new BufferedImage(maxWidth * columns + (columns - 1) * space,
-                maxHeight * rows + (rows - 1) * space + 30, BufferedImage.TYPE_INT_RGB);
+                maxHeight * rows + (rows - 1) * space + 60, BufferedImage.TYPE_INT_RGB);
         Graphics g = bImage.getGraphics();
 
         if (bg != null) {

@@ -6,6 +6,11 @@ import java.util.List;
 
 public class ALSampleSelectorSmallestMargin implements ALSampleSelectionStrategy {
     @Override
+    public String name() {
+        return "UncertaintySmallestMargin";
+    }
+
+    @Override
     public List<SampleId> selectSamplesForLabeling(ALSampleFeederDataset samples,
                                                    MNISTModel model, List<MNISTModel> auxModels) {
         EvalResultMap m = new EvalResultMap();

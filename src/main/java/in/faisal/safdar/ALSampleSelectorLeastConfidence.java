@@ -3,6 +3,9 @@ package in.faisal.safdar;
 import java.util.*;
 
 public class ALSampleSelectorLeastConfidence implements ALSampleSelectionStrategy {
+    public String name() {
+        return "UncertaintyLeastConfidence";
+    }
     public List<SampleId> selectSamplesForLabeling(ALSampleFeederDataset samples,
                                                    MNISTModel model, List<MNISTModel> auxModels) {
         //Map<SampleId, SamplePredictor> m = new HashMap();
