@@ -73,7 +73,7 @@ public class MnistDigitSFCNN implements MNISTModel {
         //TODO: Write trained model to file and read from there for eval.
         MnistDigitSFCNN cnn = new MnistDigitSFCNN();
         cnn.init(new MNISTIDXDataset());
-        cnn.train(MNIST_CNN_TRAIN_STEPS_MAX);
+        cnn.train(MNIST_CNN_TRAIN_STEPS_MAX, true);
         cnn.eval(100, null, true);
     }
 
@@ -266,7 +266,7 @@ public class MnistDigitSFCNN implements MNISTModel {
     batches with multiple epochs over the same data set, at this point.
     TODO: Support mini-batches and epochs.
      */
-    public void train(int stepCount)
+    public void train(int stepCount, boolean print)
     {
         //Loss function
         float loss = 0;
@@ -299,7 +299,9 @@ public class MnistDigitSFCNN implements MNISTModel {
                         )
                 );
                 if(i%100 == 0) {
-                    System.out.println(" Step: "+ i+ " loss: "+ loss/100.0+" accuracy: "+ accuracy);
+                    if (print) {
+                        System.out.println(" Step: "+ i+ " loss: "+ loss/100.0+" accuracy: "+ accuracy);
+                    }
                     loss = 0;
                     accTotal += accuracy;
                     accuracy = 0;

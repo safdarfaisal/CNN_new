@@ -91,7 +91,7 @@ public class ALSampleFeedingStrategy {
     public void train(MNISTModel m, List<MNISTModel> auxModels) {
         model = m;
         model.init(createTrainingDataSource());
-        model.train(trainingSet.size());
+        model.train(trainingSet.size(), false);
         EvalResultMap res = new EvalResultMap();
         model.eval(testSet.size(), res, false);
         Map<String, Object> metricsMap = res.metricsMap;
@@ -102,7 +102,7 @@ public class ALSampleFeedingStrategy {
             auxModels.forEach(
                     auxModel -> {
                         auxModel.init(createTrainingDataSource());
-                        auxModel.train(trainingSet.size());
+                        auxModel.train(trainingSet.size(), false);
                     }
             );
         }
@@ -152,16 +152,13 @@ public class ALSampleFeedingStrategy {
         MNISTDataset stageLabeledDS = ALSampleFeederDataset.create(l, testSet, ds, l.size(), testSet.size());
         model.setDataset(stageLabeledDS);
         EvalResultMap res = new EvalResultMap();
-        model.train(l.size());
+        model.train(l.size(), false);
         res = model.eval(testSet.size(), res, false);
         Map<String, Object> metricsMap = res.metricsMap;
 
         if (metrics.debug && (metrics.name.equals("QBCKLDivergence") || metrics.name.equals("QBCVoteEntropy") ||
                 metrics.name.equals("UncertaintySmallestMargin"))) {
-            //System.out.println(metrics.name + " " + String.valueOf(stageId));
-            //l.forEach(s -> System.out.println(s.value()));
             metricsMap.put("StageLabels", l);
-            //ImageDisplay.show(l, ds, metrics.name + " " + String.valueOf(stageId));
         }
         metrics.stageMetrics.add(metricsMap);
 
@@ -169,7 +166,7 @@ public class ALSampleFeedingStrategy {
             auxModels.forEach(
                     auxModel -> {
                         auxModel.setDataset(ALSampleFeederDataset.create(l, testSet, ds, l.size(), testSet.size()));
-                        auxModel.train(l.size());
+                        auxModel.train(l.size(), false);
                     }
             );
         }
@@ -189,7 +186,7 @@ public class ALSampleFeedingStrategy {
 
     public static void main(String[] args) {
         //TODO: Maybe move this to an experiment class later so that multiple experiments can be supported.
-        int stageCount = 9;
+        int stageCount = 45;
         ALSampleSelectionStrategy[] strategies = new ALSampleSelectionStrategy[]{
                 new ALSampleSelectorLeastConfidence(),
                 new ALSampleSelectorSmallestMargin(),
@@ -203,9 +200,9 @@ public class ALSampleFeedingStrategy {
         Map<String, ALSampleFeedingStrategy> sampleFeeders = new HashMap<>();
         MNISTDataset ds = new MNISTIDXDataset();
         //train the first strategy alone.
-        ALMetricsStrategy alms = new ALMetricsStrategy(strategies[0].name(), true);
+        ALMetricsStrategy alms = new ALMetricsStrategy(strategies[0].name(), false);
         ALSampleFeedingStrategy s = ALSampleFeedingStrategy.create(ds,
-                1000, stageCount, 1000, 10, strategies[0],
+                200, stageCount, 200, 10, strategies[0],
                 alms);
         ml.add(alms);
         sampleFeeders.put(strategies[0].name(), s);
@@ -234,7 +231,7 @@ public class ALSampleFeedingStrategy {
         IntStream.range(0, stageCount).forEach(i -> sampleFeeders.forEach((j, feeder) -> feeder.runStage(i)));
         //create data files for plotting learning curves
         //ml.forEach(metric -> metric.createOutputForGnuPlot("output"));
-        List<Image> l = ml.stream().flatMap(
+        List<Optional<Image>> l = ml.stream().flatMap(
                 m -> {
                     m.createOutputForGnuPlot("output");
                     return m.stageLabelsStream();
@@ -263,8 +260,9 @@ public class ALSampleFeedingStrategy {
                         "Stage: " + String.valueOf(mel.getKey())
                 )
         ).toList();
-        Image im = ImageDisplay.gridImages(l, 20, Color.white, 1, "Images labeled in stages");
-        ImageDisplay.show(im);
+        ImageDisplay.gridImages(
+                l, 20, Color.white, 1, "Images labeled in stages"
+        ).ifPresent(ImageDisplay::show);
         System.out.println("Done");
     }
 }

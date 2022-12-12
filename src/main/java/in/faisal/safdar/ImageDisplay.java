@@ -5,13 +5,14 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 
 public class ImageDisplay {
-    public static List<Image> sampleIdsToImages(List<SampleId> sampleList, MNISTDataset ds) {
+    public static List<Optional<Image>> sampleIdsToImages(List<SampleId> sampleList, MNISTDataset ds) {
         return sampleList.stream().map(s -> {
-            java.awt.Image im = new BufferedImage(28,28,3);
+            Optional<Image> im = Optional.empty();
             try {
-                im = ds.trainingSample(s).bufferedImage();
+                im = Optional.ofNullable(ds.trainingSample(s).bufferedImage());
             } catch(IOException ex) {
                 ex.printStackTrace();
             }
@@ -19,7 +20,8 @@ public class ImageDisplay {
         }).toList();
     }
     public static void show(List<SampleId> sampleList, MNISTDataset ds, String text) {
-        show(gridImages(sampleIdsToImages(sampleList, ds), 20, Color.white, 5, text));
+        Optional<Image> o = gridImages(sampleIdsToImages(sampleList, ds), 20, Color.white, 5, text);
+        o.ifPresent(ImageDisplay::show);
     }
 
     public static void show(Image image) {
@@ -47,9 +49,12 @@ public class ImageDisplay {
      *
      * Thanks to <a href="http://www.java2s.com/example/java-utility-method/bufferedimage-merge/mergeimages-list-images-int-space-color-bg-1d30c.html">Java2S utility examples</a>
      */
-    public static Image gridImages(List<Image> images, int space, Color bg, int columns, String text) {
+    public static Optional<Image> gridImages(List<Optional<Image>> images, int space, Color bg, int columns, String text) {
+        if (images.isEmpty()) {
+            return Optional.empty();
+        }
         if (images.size() == 1) {
-            return (Image) images.get(0);
+            return images.get(0);
         }
 
         int maxHeight = 0;
@@ -60,12 +65,15 @@ public class ImageDisplay {
             rows = 1;
         }
 
-        for (Image o : images) {
-            int imageWidth = o.getWidth(null);
-            int imageHeight = o.getHeight(null);
+        for (Optional<Image> o : images) {
+            if (o.isPresent()) {
+                Image im = o.get();
+                int imageWidth = im.getWidth(null);
+                int imageHeight = im.getHeight(null);
 
-            maxHeight = Math.max(maxHeight, imageHeight);
-            maxWidth = Math.max(maxWidth, imageWidth);
+                maxHeight = Math.max(maxHeight, imageHeight);
+                maxWidth = Math.max(maxWidth, imageWidth);
+            }
         }
 
         if (columns > images.size()) {
@@ -84,13 +92,16 @@ public class ImageDisplay {
         int colCnt = 0;
         int rowCnt = 0;
 
-        for (Image o : images) {
-            g.drawImage(o, colCnt * (maxWidth + space), rowCnt * (maxHeight + space), null);
-            colCnt++;
+        for (Optional<Image> o : images) {
+            if (o.isPresent()) {
+                Image im = o.get();
+                g.drawImage(im, colCnt * (maxWidth + space), rowCnt * (maxHeight + space), null);
+                colCnt++;
 
-            if (colCnt >= columns) {
-                colCnt = 0;
-                rowCnt++;
+                if (colCnt >= columns) {
+                    colCnt = 0;
+                    rowCnt++;
+                }
             }
         }
 
@@ -99,6 +110,6 @@ public class ImageDisplay {
         g.setColor(Color.black);
         g.drawString(text, 5, bImage.getHeight()-30);
 
-        return bImage;
+        return Optional.of(bImage);
     }
 }
