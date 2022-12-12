@@ -1,6 +1,8 @@
-# CNN_New 
+# JavaMNISTCNN
 
-A basic Convolutional Neural Network made in order to recognize MNIST digits, implemented from scratch using Java.
+This repository contains a basic convolutional neural network made in order to recognize MNIST digits, implemented from scratch using Java. It also has a framework (also developed from scratch using Java) for evaluating active learning strategies applied on the CNN. 
+
+The work on the active learning framework is available at https://safdarfaisal.github.io/JavaMNISTCNN/.
 
 ### Model used for the CNN
 
@@ -16,3 +18,4 @@ Softmax activation
 ### Credits
 
 1. Java matrix library [EJML](http://ejml.org/wiki/index.php?title=Main_Page) 
+2. [Apache Commons Lang Library](https://safdarfaisal.github.io/JavaMNISTCNN/)
