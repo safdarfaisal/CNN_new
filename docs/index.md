@@ -137,7 +137,10 @@ Upon training the model with 10000 images using just passive learning, we were a
 9. The unlabeled set was divided randomly into 10 stages, each with 1000 samples. 
 10. Within each stage, the sample selections strategies were applied on pools of 100 samples each, such that one sample was selected from each pool according to the selection metric for the strategy. This was done by evaluating the main and committee models against the test set and applying the selection respective strategies. This was done by evaluating. At the end of the stage, ten samples were selected.
 11. For each strategy, the 10 selected samples were used to incrementaly train the main model and the committee models. The main model was evaluated against the test set and accuracy values were recorded.
-12. The procedure in (9) was repeated for all 10 stages and the generated accuracy were used to plot learning curves for all strategies
+12. The procedure in (9) was repeated for all 10 stages and the generated accuracy were used to plot learning curves for all strategies.
+13. The entire experiment was repeated with initial training set of 200 images, with 9 stages of 200 each and 10 images taken from each stage, to evaluate the potential of active learning with minimal amount of initial training. 
+14. The entire experiment in (13) was repeated with 45 stages of 200 each to identify the point at which active learning provided the same results as passive learning with a full dataset, (10000 images).
+
 
 The entire framework was written from scratch in Java and GNUPlot was used for plotting.
 
@@ -147,20 +150,33 @@ Our major focus was on identifying good strategies to identify samples for label
 
 In this, we noted that some methods fared considerably better than others,  and were comparable to the passively learnt benchmark model that used 100% labelling.
 
+
+
+1. Illustrative results from step 12
+
 ![Results](./output0.svg)
+
 
 Conventional uncertainity measures like least confidence, smallest margin and largest margin consistently showed significant improvement in classification accuracy when the label count increased from 1000 to 1090 (only 90 samples labelled from 9000). QBC using max vote entropy also showed good performance compared to random selection. Uncertainity measurement using Max entropy did not provide good results consistently
 
 The above graph illustrates the pattern, although the actual accuracy numbers for initial training and incremental active learning stages varied across multiple trials of the same experiment.  
 
+2. Illustrative results from step 13
+![step 13](./output.svg)
+3. Illustrative results from step 14
+![step14](output2.svg)
+4. Misbehaviour of KLdivergence strategy
 ![4](./KLcompare.svg)
 
 QBC with max KL divergence conistently showed abnormal behaviour through multiple trials. Classification accuracy kept dropping as more selected samples were trained. When least divergent samples were selected, results were similar to that obtained for random selection. 
 
-
 ## Discussion
 
-We have seen that active learning methods are very powerful tools that can be used to augment our models providing more value for significantly lower effort. Approximately, 10% improvement in accuracy was observed with 90 samples selected using active learning. The same improvement was observed only after labelling ~1500 samples with randomly selected passive learning. This represents a 94% reduction in terms of the labelling cost/effort. The savings would be lower as we train further towards higher accuracy numbers, but they are still expected to be significant. 
+We have seen that active learning methods are very powerful tools that can be used to augment our models providing more value for significantly lower effort. Approximately, 10% improvement in accuracy was observed with 90 samples selected using active learning. The same improvement was observed only after labelling ~1500 samples with randomly selected passive learning. This represents a 94% reduction in terms of the labelling cost/effort. 
+
+When 200 samples were provided for the initial training (step 13), the accuracy value for the best model increased from ~25% to ~65% by providing just 90 samples (a total of 290 samples). Similar accuracy was obtained with passive learning only at around 1500 samples which points to a similar reduction in cost and effort as earlier mentioned.
+
+When we kept running the model to find the point at which it reached 80% that the model obtained using 10,000 samples on passive learning (Step 14), we found that maximum accuracy occured between 12 and 22 stages (320-420 images in total). This is consistent with our learnings from the previous experiments - a cost saving of around 95%. 
 
 ![comparison of iamge](./imagecompare.jpg)
 
