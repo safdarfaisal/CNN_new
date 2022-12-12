@@ -2,6 +2,14 @@
   src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
 </script>
 
+<script>
+  MathJax = {
+    tex: {
+      inlineMath: [['$', '$']]
+    }
+  };
+</script>
+
 # Active Learning and using it on a CNN
 
 - Safdar Faisal, 2022-12-11
@@ -139,7 +147,7 @@ Our major focus was on identifying good strategies to identify samples for label
 
 In this, we noted that some methods fared considerably better than others,  and were comparable to the passively learnt benchmark model that used 100% labelling.
 
-![Results](./output.svg)
+![Results](./output0.svg)
 
 Conventional uncertainity measures like least confidence, smallest margin and largest margin consistently showed significant improvement in classification accuracy when the label count increased from 1000 to 1090 (only 90 samples labelled from 9000). QBC using max vote entropy also showed good performance compared to random selection. Uncertainity measurement using Max entropy did not provide good results consistently
 
