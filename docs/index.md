@@ -152,25 +152,25 @@ In this, we noted that some methods fared considerably better than others,  and 
 
 1. Illustrative results from step 12
 
-![Results](./output0.svg)
+    ![Results](./output0.svg)
 
-Conventional uncertainity measures like least confidence, smallest margin and largest margin consistently showed significant improvement in classification accuracy when the label count increased from 1000 to 1090 (only 90 samples labelled from 9000). QBC using max vote entropy also showed good performance compared to random selection. Uncertainity measurement using Max entropy did not provide good results consistently
+    Conventional uncertainity measures like least confidence, smallest margin and largest margin consistently showed significant improvement in classification accuracy when the label count increased from 1000 to 1090 (only 90 samples labelled from 9000). QBC using max vote entropy also showed good performance compared to random selection. Uncertainity measurement using Max entropy did not provide good results consistently
 
-The above graph illustrates the pattern, although the actual accuracy numbers for initial training and incremental active learning stages varied across multiple trials of the same experiment.  
+    The above graph illustrates the pattern, although the actual accuracy numbers for initial training and incremental active learning stages varied across multiple trials of the same experiment.  
 
 2. Illustrative results from step 13
 
-![step 13](./output.svg)
+    ![step 13](./output.svg)
 
 3. Illustrative results from step 14
 
-![step14](output2.svg)
+    ![step14](output2.svg)
 
 4. Misbehaviour of KLdivergence strategy
 
-![4](./KLcompare.svg)
+    ![4](./KLcompare.svg)
 
-QBC with max KL divergence conistently showed abnormal behaviour through multiple trials. Classification accuracy kept dropping as more selected samples were trained. When least divergent samples were selected, results were similar to that obtained for random selection. 
+    QBC with max KL divergence conistently showed abnormal behaviour through multiple trials. Classification accuracy kept dropping as more selected samples were trained. When least divergent samples were selected, results were similar to that obtained for random selection. 
 
 ## Discussion
 
