@@ -3,11 +3,10 @@ package in.faisal.safdar;
 import org.apache.commons.lang3.tuple.Triple;
 
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 //TODO: Should convert all code to be functional later. Use more exceptions for error cases too.
 public class ALSampleFeedingStrategy {
@@ -182,87 +181,5 @@ public class ALSampleFeedingStrategy {
             return feeder;
         }
         return null;
-    }
-
-    public static void main(String[] args) {
-        //TODO: Maybe move this to an experiment class later so that multiple experiments can be supported.
-        int stageCount = 45;
-        ALSampleSelectionStrategy[] strategies = new ALSampleSelectionStrategy[]{
-                new ALSampleSelectorLeastConfidence(),
-                new ALSampleSelectorSmallestMargin(),
-                new ALSampleSelectorLargestMargin(),
-                new ALSampleSelectorEntropy(),
-                new ALSampleSelectorQBCVoteEntropy(),
-                new ALSampleSelectorQBCKLDivergence(),
-                new ALSampleSelectorRandom()
-        };
-        List<ALMetricsStrategy> ml = new ArrayList<>(10);
-        Map<String, ALSampleFeedingStrategy> sampleFeeders = new HashMap<>();
-        MNISTDataset ds = new MNISTIDXDataset();
-        //train the first strategy alone.
-        ALMetricsStrategy alms = new ALMetricsStrategy(strategies[0].name(), false);
-        ALSampleFeedingStrategy s = ALSampleFeedingStrategy.create(ds,
-                200, stageCount, 200, 10, strategies[0],
-                alms);
-        ml.add(alms);
-        sampleFeeders.put(strategies[0].name(), s);
-        //auxModels are created and passed here because we want to use the training cache for QBC.
-        //The downside is that auxModels will be trained for stages too for all strategies.
-        List<MNISTModel> auxModels = new ArrayList<>();
-        for (int j = 0; j < 4; j++) {
-            auxModels.add(new MnistDigitSFCNN());
-        }
-        assert s != null;
-        s.train(new MnistDigitSFCNN(), auxModels);
-
-        //just clone runner for the remaining strategies.
-        Arrays.stream(strategies).skip(1).forEach(
-                strategy -> {
-                    ALMetricsStrategy ms = alms.cloneRefurbished(strategy.name());
-                    ml.add(ms);
-                    sampleFeeders.put(
-                            strategy.name(),
-                            s.cloneRefurbished(ds, strategy, ms)
-                    );
-                }
-        );
-        //run stages for all strategies
-        //TODO: these stages can be run in parallel in threads (ensure concurrency)
-        IntStream.range(0, stageCount).forEach(i -> sampleFeeders.forEach((j, feeder) -> feeder.runStage(i)));
-        //create data files for plotting learning curves
-        //ml.forEach(metric -> metric.createOutputForGnuPlot("output"));
-        List<Optional<Image>> l = ml.stream().flatMap(
-                m -> {
-                    m.createOutputForGnuPlot("output");
-                    return m.stageLabelsStream();
-                }
-        ).flatMap(
-                t -> t.getRight().orElseGet(ArrayList::new).stream().map(
-                        sample -> Triple.of(t.getMiddle(), t.getLeft(), sample)
-                )
-        ).collect(
-                Collectors.groupingBy(
-                        Triple::getLeft, Collectors.groupingBy(
-                                Triple::getMiddle, Collectors.mapping(
-                                        Triple::getRight, Collectors.toList()
-                                )
-                        )
-                )
-        ).entrySet().stream().map(
-                mel -> ImageDisplay.gridImages(
-                        mel.getValue().entrySet().stream().map(
-                                el -> ImageDisplay.gridImages(
-                                        ImageDisplay.sampleIdsToImages(el.getValue(), ds),
-                                        20, Color.white,
-                                        5, el.getKey() + " " + String.valueOf(mel.getKey())
-                                )
-                        ).toList(), 20, Color.white, 7,
-                        "Stage: " + String.valueOf(mel.getKey())
-                )
-        ).toList();
-        ImageDisplay.gridImages(
-                l, 20, Color.white, 1, "Images labeled in stages"
-        ).ifPresent(ImageDisplay::show);
-        System.out.println("Done");
     }
 }
